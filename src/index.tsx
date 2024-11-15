@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
 interface SliderProps {
   children: React.ReactElement[]; // Expecting an array of React elements as children
@@ -24,64 +24,40 @@ const Slider: React.FC<SliderProps> & { Slide: React.FC<SlideProps> } = ({
   blurBorders = false,
   blurBorderColor = "#fff",
 }) => {
-  const [idNanoid, setIdNanoid] = useState<string>("");
-
-  // Generate a random string ID for keyframes
-  const generarCadenaAleatoria = (): string => {
-    let cadena = "";
-    const caracteres =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (let i = 0; i < 10; i++) {
-      cadena += caracteres.charAt(
-        Math.floor(Math.random() * caracteres.length)
-      );
-    }
-    return cadena;
-  };
-
-  useEffect(() => {
-    setIdNanoid(generarCadenaAleatoria());
-  }, []);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<Animation | null>(null);
 
   useEffect(() => {
     if (!children.length) return;
 
     // Calculate the total translation value based on children length and width
-    const totalTranslateX = `calc(${toRight ? "" : "-"}${width} * ${
-      children.length
+    const totalTranslateX = `calc(${toRight ? '' : '-'}${width} * ${
+        children.length
     })`;
 
-    // Dynamically create the CSS keyframes for the animation
-    const style = document.createElement("style");
-    style.type = "text/css";
-    const keyFrames = `
-      @keyframes slider_logo_slider_${idNanoid} {
-        0% {
-          transform: translateX(0);
-        }
-        100% {
-          transform: translateX(${totalTranslateX});
-        }
-      }`;
+    const keyframes = [
+        { transform: 'translateX(0px)' },
+        { transform: `translateX(${totalTranslateX})` },
+    ];
 
-    style.innerHTML = keyFrames;
-    document.getElementsByTagName("head")[0].appendChild(style);
+    animationRef.current = sliderRef.current?.animate(keyframes, {
+        duration: duration * 1000,
+        easing: 'linear',
+        iterations: Infinity,
+    }) || null;
+  }, [toRight, width, children, duration]);
 
-    // Cleanup the created styles on component unmount
-    return () => {
-      document.getElementsByTagName("head")[0].removeChild(style);
-    };
-  }, [toRight, width, children, idNanoid]);
+  const handleEnter = useCallback(() => {
+    if (pauseOnHover) {
+          animationRef.current?.pause();
+      }
+  }, [pauseOnHover]);
 
-  const handleMouseEnter = () => {
-    const sliderElement = document.getElementById(`slider_${idNanoid}`);
-    if (sliderElement) sliderElement.style.animationPlayState = "paused";
-  };
-
-  const handleMouseLeave = () => {
-    const sliderElement = document.getElementById(`slider_${idNanoid}`);
-    if (sliderElement) sliderElement.style.animationPlayState = "running";
-  };
+  const handleLeave = useCallback(() => {
+      if (pauseOnHover) {
+          animationRef.current?.play();
+      }
+  }, [pauseOnHover]);
 
   return (
     <div style={{ position: "relative" }}>
@@ -93,17 +69,17 @@ const Slider: React.FC<SliderProps> & { Slide: React.FC<SlideProps> } = ({
           overflow: "hidden",
           position: "relative",
         }}
-        onMouseEnter={() => pauseOnHover && handleMouseEnter()}
-        onMouseLeave={() => pauseOnHover && handleMouseLeave()}
-        id={`slider_wrapper_${idNanoid}`}
+        onMouseEnter={() => pauseOnHover && handleEnter()}
+        onMouseLeave={() => pauseOnHover && handleLeave()}
+        onTouchStart={handleEnter}
+        onTouchEnd={handleLeave}
       >
         <div
           style={{
             display: "flex",
-            animation: `slider_logo_slider_${idNanoid} ${duration}s linear infinite`,
             width: `calc(${width} * ${children.length * 3})`,
           }}
-          id={`slider_${idNanoid}`}
+          ref={sliderRef}
         >
           {children.map((child, i) => (
             <React.Fragment key={i}>
