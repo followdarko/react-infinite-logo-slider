@@ -31,8 +31,8 @@ const Slider: React.FC<SliderProps> & { Slide: React.FC<SlideProps> } = ({
     if (!children.length) return;
 
     // Calculate the total translation value based on children length and width
-    const totalTranslateX = `calc(${toRight ? '' : '-'}${width} * ${
-        children.length
+    const totalTranslateX = `calc(${toRight ? "" : "-"}${width} * ${
+      children.length
     })`;
 
     const keyframes = [
