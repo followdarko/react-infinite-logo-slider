@@ -48,16 +48,12 @@ const Slider: React.FC<SliderProps> & { Slide: React.FC<SlideProps> } = ({
   }, [toRight, width, children, duration]);
 
   const handleEnter = useCallback(() => {
-    if (pauseOnHover) {
-          animationRef.current?.pause();
-      }
-  }, [pauseOnHover]);
+      animationRef.current?.pause();
+  }, []);
 
   const handleLeave = useCallback(() => {
-      if (pauseOnHover) {
-          animationRef.current?.play();
-      }
-  }, [pauseOnHover]);
+      animationRef.current?.play();
+  }, []);
 
   return (
     <div style={{ position: "relative" }}>
@@ -71,8 +67,8 @@ const Slider: React.FC<SliderProps> & { Slide: React.FC<SlideProps> } = ({
         }}
         onMouseEnter={() => pauseOnHover && handleEnter()}
         onMouseLeave={() => pauseOnHover && handleLeave()}
-        onTouchStart={handleEnter}
-        onTouchEnd={handleLeave}
+        onTouchStart={() => pauseOnHover && handleEnter()}
+        onTouchEnd={() => pauseOnHover && handleLeave()}
       >
         <div
           style={{
